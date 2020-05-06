@@ -1,0 +1,5 @@
+github.com/Valgard/go-pcre v0.0.0-20190614221902-2375a3cf1302 h1:WuWsINP05BAub6yzLCrPtuqmfdfxI2T7IomOJ34skJ0=
+github.com/Valgard/go-pcre v0.0.0-20190614221902-2375a3cf1302/go.mod h1:/dP+09oHfmA9T/onwrXzLXRV0leJ3oXOfkKDZUSTQls=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/rubrikinc/go-pcre v0.0.0-20190614221902-2375a3cf1302 h1:+Qz51m9JmNK/wHWUPWVk7CMO2ambYMmIzD9WWXsNfmE=
+github.com/rubrikinc/go-pcre v0.0.0-20190614221902-2375a3cf1302/go.mod h1:d9KqajSrKZBsOUplfMP16dvaxcRFobAV8qaGlrceqBI=
