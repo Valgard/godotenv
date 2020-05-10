@@ -15,6 +15,10 @@ func MatchAll(pattern string, subject string, flags int, offset int) ([]pcre.Mat
 		return matches, false
 	}
 
+	if len(m) == 0 {
+		return m, false
+	}
+
 	for _, match := range m {
 		// skip matches before offset
 		if offset > match.Loc[0] {
