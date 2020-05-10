@@ -10,7 +10,7 @@ func MatchAll(pattern string, subject string, flags int, offset int) ([]pcre.Mat
 	regexp := pcre.MustCompile(pattern, flags)
 	defer regexp.FreeRegexp()
 
-	m, err := regexp.FindAllOffset(subject, flags, offset)
+	m, err := regexp.FindAllOffset(subject, 0, offset)
 	if err != nil {
 		return matches, false
 	}
