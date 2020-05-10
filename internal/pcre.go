@@ -42,3 +42,21 @@ func Match(pattern string, subject string, flags int, offset int) (pcre.Match, b
 
 	return matches[0], true
 }
+
+func ReplaceCallback(pattern string, subject string, flags int, callable func(matches pcre.Match) (string, error)) (string, error) {
+	matches, ok := MatchAll(pattern, subject, flags, 0)
+	if !ok {
+		return subject, nil
+	}
+
+	var value string
+	for _, match := range matches {
+		var err error
+		value, err = callable(match)
+		if err != nil  {
+			return "", err
+		}
+	}
+
+	return value, nil
+}

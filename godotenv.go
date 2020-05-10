@@ -286,13 +286,26 @@ func (d *dotEnv) lexValue() (string, error) {
 			}
 
 			d.cursor++
+
+			var err error
 			value = strings.ReplaceAll(value, "\\\"", "\"")
 			value = strings.ReplaceAll(value, "\\r", "\r")
 			value = strings.ReplaceAll(value, "\\n", "\n")
+
 			resolvedValue := value
-			resolvedValue = d.resolveVariables(resolvedValue, map[string]bool{})
-			resolvedValue = d.resolveCommands(resolvedValue, map[string]bool{})
+
+			resolvedValue, err = d.resolveVariables(resolvedValue)
+			if err != nil {
+				return "", err
+			}
+
+			resolvedValue, err = d.resolveCommands(resolvedValue)
+			if err != nil {
+				return "", err
+			}
+
 			resolvedValue = strings.ReplaceAll(resolvedValue, "\\\\", "\\")
+
 			v+= resolvedValue
 		default:
 			value := ""
@@ -317,10 +330,21 @@ func (d *dotEnv) lexValue() (string, error) {
 				d.cursor++
 			}
 
+			var err error
 			value = strings.TrimRight(value, " \t\n\r\x00\x0B")
+
 			resolvedValue := value
-			resolvedValue = d.resolveVariables(resolvedValue, map[string]bool{})
-			resolvedValue = d.resolveCommands(resolvedValue, map[string]bool{})
+
+			resolvedValue, err = d.resolveVariables(resolvedValue)
+			if err != nil {
+				return "", err
+			}
+
+			resolvedValue, err = d.resolveCommands(resolvedValue)
+			if err != nil {
+				return "", err
+			}
+
 			resolvedValue = strings.ReplaceAll(resolvedValue, "\\\\", "\\")
 
 			_, matchOk := internal.Match("\\s+", value, 0, 0)
@@ -356,20 +380,79 @@ func (d *dotEnv) skipEmptyLines() {
 	}
 }
 
-func (d *dotEnv) resolveCommands(value string, loadedVars map[string]bool) string {
+func (d *dotEnv) resolveCommands(value string) (string, error) {
 	if ! strings.Contains(value, "$") {
-		return value
+		return value, nil
 	}
 
-	panic("resolveCommands: implement me")
+	return value, nil
 }
 
-func (d *dotEnv) resolveVariables(value string, loadedVars map[string]bool) string {
+func (d *dotEnv) resolveVariables(value string) (string, error) {
 	if ! strings.Contains(value, "$") {
-		return value
+		return value, nil
 	}
 
-	panic("resolveVariables: implement me")
+	regex := `
+		(?<!\\)
+		(?P<backslashes>\\*)               # escaped with a backslash?
+		\$
+		(?!\()                             # no opening parenthesis
+		(?P<opening_brace>\{)?             # optional brace
+		(?P<name>` + regexVarname + `)?   # var name
+		(?P<default_value>:[-=][^\}]++)?   # optional default value
+		(?P<closing_brace>\})?             # optional closing brace
+	`
+
+	callback := func(matches pcre.Match) (string, error) {
+		// odd number of backslashes means the $ character is escaped
+		if 1 == len(matches.Groups[matches.NamedGroups["backslashes"]].Finding) % 2 {
+			return matches.Finding[1:], nil
+		}
+
+		// unescaped $ not followed by variable name
+		if 0 == len(matches.Groups[matches.NamedGroups["name"]].Finding) {
+			return matches.Finding, nil
+		}
+
+		if "{" == matches.Groups[matches.NamedGroups["opening_brace"]].Finding && 0 == len(matches.Groups[matches.NamedGroups["closing_brace"]].Finding) {
+			return "", d.error("unclosed braces on variable expansion")
+		}
+
+		name := matches.Groups[matches.NamedGroups["name"]].Finding
+
+		value, ok := d.values[name]
+		if ! ok {
+			value = os.Getenv(name)
+		}
+
+		if "" == value && "" != matches.Groups[matches.NamedGroups["default_value"]].Finding {
+			unsupportedChars := "'\"{$"
+			if strings.ContainsAny(value, unsupportedChars) {
+				return "", d.error(fmt.Sprintf("Unsupported character %q found in the default value of variable \"$%s\"", value[strings.IndexAny(value, unsupportedChars)], name))
+			}
+
+			value = matches.Groups[matches.NamedGroups["default_value"]].Finding[2:]
+
+			if '=' == matches.Groups[matches.NamedGroups["default_value"]].Finding[1] {
+				d.values[name] = value
+			}
+		}
+
+		if 0 == len(matches.Groups[matches.NamedGroups["opening_brace"]].Finding)  && 0 != len(matches.Groups[matches.NamedGroups["closing_brace"]].Finding) {
+			value+= "}"
+		}
+
+		return matches.Groups[matches.NamedGroups["backslashes"]].Finding + value, nil
+	}
+
+	var err error
+	value, err = internal.ReplaceCallback(regex, value, pcre.EXTENDED, callback)
+	if err != nil {
+		return "", err
+	}
+
+	return value, nil
 }
 
 func (d *dotEnv) moveCursor(text string) {
