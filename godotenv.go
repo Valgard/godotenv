@@ -127,12 +127,13 @@ func (d *dotEnv) Overload(path string, extraPaths ...string) error {
 }
 
 func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) error {
-	currentEnv := map[string]string{}
-	rawEnv := os.Environ()
+	var (
+		currentEnv = map[string]string{}
+	)
 
-	for _, rawEnvLine := range rawEnv {
-		key := strings.Split(rawEnvLine, "=")[0]
-		value := strings.Split(rawEnvLine, "=")[1]
+	for _, line := range os.Environ() {
+		key := strings.Split(line, "=")[0]
+		value := strings.Split(line, "=")[1]
 		currentEnv[key] = value
 	}
 
