@@ -32,6 +32,16 @@ func EnvKey(envKey string) option {
 	}
 }
 
+// Sets the name of the env vars that defines the app debug status
+func DebugKey(debugKey string) option {
+	return func(d *DotEnv) option {
+		previous := d.debugKey
+		d.envKey = debugKey
+
+		return DebugKey(previous)
+	}
+}
+
 // Sets the app env to use when none is defined
 func DefaultEnv(defaultEnv string) option {
 	return func(d *DotEnv) option {
