@@ -1,9 +1,9 @@
 package godotenv
 
-type option func(*dotEnv) option
+type option func(*DotEnv) option
 
 func ProdEnvs(prodEnvs []string) option {
-	return func(d *dotEnv) option {
+	return func(d *DotEnv) option {
 		previous := d.prodEnvs
 		d.prodEnvs = prodEnvs
 
@@ -12,7 +12,7 @@ func ProdEnvs(prodEnvs []string) option {
 }
 
 func TestEnvs(testEnvs []string) option {
-	return func(d *dotEnv) option {
+	return func(d *DotEnv) option {
 		previous := d.testEnvs
 		d.testEnvs = testEnvs
 
@@ -21,7 +21,7 @@ func TestEnvs(testEnvs []string) option {
 }
 
 func EnvKey(envKey string) option {
-	return func(d *dotEnv) option {
+	return func(d *DotEnv) option {
 		previous := d.envKey
 		d.envKey = envKey
 
@@ -30,7 +30,7 @@ func EnvKey(envKey string) option {
 }
 
 func DefaultEnv(defaultEnv string) option {
-	return func(d *dotEnv) option {
+	return func(d *DotEnv) option {
 		previous := d.defaultEnv
 		d.defaultEnv = defaultEnv
 
