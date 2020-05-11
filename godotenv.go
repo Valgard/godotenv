@@ -125,11 +125,9 @@ func (d *dotEnv) Overload(path string, extraPaths ...string) error {
 }
 
 func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) error {
-	// updateLoadedVars := false
-	// loadedVars := map[string]bool{}
-
 	currentEnv := map[string]string{}
 	rawEnv := os.Environ()
+
 	for _, rawEnvLine := range rawEnv {
 		key := strings.Split(rawEnvLine, "=")[0]
 		value := strings.Split(rawEnvLine, "=")[1]
@@ -137,23 +135,12 @@ func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) e
 	}
 
 	for name, value := range values {
-		// _, loadedVarsExists := loadedVars[name]
-		// _, envExists := currentEnv[name]
-		// if !loadedVarsExists && (!overrideExistingVars && envExists) {
 		if _, envExists := currentEnv[name]; !overrideExistingVars && envExists {
 			continue
 		}
 
 		_ = os.Setenv(name, value)
-
-		// if _, exists := loadedVars[name]; !exists {
-		// 	loadedVars[name] = updateLoadedVars
-		// }
 	}
-
-	// if updateLoadedVars {
-	//
-	// }
 
 	return nil
 }
