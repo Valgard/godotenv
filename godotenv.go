@@ -21,7 +21,7 @@ const (
 	regexEmptyLines string = `(?:\s*+(?:#[^\n]*+)?+)++`
 )
 
-type DotEnv struct {
+type dotEnv struct {
 	path       string
 	cursor     int
 	lineno     int
@@ -36,8 +36,9 @@ type DotEnv struct {
 	testEnvs   []string
 }
 
-func New(opts ...option) *DotEnv {
-	env := &DotEnv{
+// Creates new dotEnv instance
+func New(opts ...option) *dotEnv {
+	env := &dotEnv{
 		path:       "",
 		cursor:     0,
 		lineno:     0,
@@ -56,7 +57,11 @@ func New(opts ...option) *DotEnv {
 	return env
 }
 
-func (d *DotEnv) Option(opts ...option) (previous []option) {
+func init() {
+	dotenv = New()
+}
+
+func (d *dotEnv) Option(opts ...option) (previous []option) {
 	for _, opt := range opts {
 		previous = append(previous, opt(d))
 	}
@@ -64,17 +69,11 @@ func (d *DotEnv) Option(opts ...option) (previous []option) {
 	return previous
 }
 
-// Loads one or several .env files.
-func (d *DotEnv) Load(path string, extraPaths ...string) error {
+func (d *dotEnv) Load(path string, extraPaths ...string) error {
 	return d.doLoad(false, append([]string{path}, extraPaths...)...)
 }
 
-// Loads a .env file and the corresponding .env.local, .env.$env and .env.$env.local files if they exist.
-//
-// .env.local is always ignored in test env because tests should produce the same results for everyone.
-//
-// .env.dist is loaded when it exists and .env is not found.
-func (d *DotEnv) LoadEnv(path string, opts ...option) error {
+func (d *dotEnv) LoadEnv(path string, opts ...option) error {
 	previous := d.Option(opts...)
 	defer d.Option(previous...)
 
@@ -125,13 +124,11 @@ func (d *DotEnv) LoadEnv(path string, opts ...option) error {
 	return nil
 }
 
-// Loads one or several .env files and enables override existing vars.
-func (d *DotEnv) Overload(path string, extraPaths ...string) error {
+func (d *dotEnv) Overload(path string, extraPaths ...string) error {
 	return d.doLoad(true, append([]string{path}, extraPaths...)...)
 }
 
-// Sets values as environment variables.
-func (d *DotEnv) Populate(values map[string]string, overrideExistingVars bool) error {
+func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) error {
 	var (
 		currentEnv = map[string]string{}
 	)
@@ -159,8 +156,7 @@ func (d *DotEnv) Populate(values map[string]string, overrideExistingVars bool) e
 	return nil
 }
 
-// Parses the contents of an .env file
-func (d *DotEnv) Parse(data string, path string) (map[string]string, error) {
+func (d *dotEnv) Parse(data string, path string) (map[string]string, error) {
 	var (
 		err   error
 		state int    = stateVarname
@@ -207,7 +203,7 @@ func (d *DotEnv) Parse(data string, path string) (map[string]string, error) {
 	return d.values, nil
 }
 
-func (d *DotEnv) lexVarname() (string, error) {
+func (d *dotEnv) lexVarname() (string, error) {
 	match, ok := internal.Match(`(export[ \t]++)?(`+regexVarname+`)`, d.data, pcre.ANCHORED, d.cursor)
 	if !ok {
 		return "", d.error("invalid character in variable name")
@@ -235,7 +231,7 @@ func (d *DotEnv) lexVarname() (string, error) {
 	return match.Groups[2].Finding, nil
 }
 
-func (d *DotEnv) lexValue() (string, error) {
+func (d *dotEnv) lexValue() (string, error) {
 	match, ok := internal.Match(`[ \t]*+(?:#.*)?$`, d.data, pcre.ANCHORED + pcre.MULTILINE, d.cursor)
 	if ok {
 		d.moveCursor(match.Finding)
@@ -371,18 +367,18 @@ func (d *DotEnv) lexValue() (string, error) {
 	return v, nil
 }
 
-func (d *DotEnv) lexNestedExpression() (string, error) {
+func (d *dotEnv) lexNestedExpression() (string, error) {
 	panic("lexNestedExpression: implement me")
 }
 
-func (d *DotEnv) skipEmptyLines() {
+func (d *dotEnv) skipEmptyLines() {
 	match, ok := internal.Match(regexEmptyLines, d.data, pcre.ANCHORED, d.cursor)
 	if ok {
 		d.moveCursor(match.Finding)
 	}
 }
 
-func (d *DotEnv) resolveCommands(value string) (string, error) {
+func (d *dotEnv) resolveCommands(value string) (string, error) {
 	if ! strings.Contains(value, "$") {
 		return value, nil
 	}
@@ -390,7 +386,7 @@ func (d *DotEnv) resolveCommands(value string) (string, error) {
 	return value, nil
 }
 
-func (d *DotEnv) resolveVariables(value string) (string, error) {
+func (d *dotEnv) resolveVariables(value string) (string, error) {
 	if ! strings.Contains(value, "$") {
 		return value, nil
 	}
@@ -457,12 +453,12 @@ func (d *DotEnv) resolveVariables(value string) (string, error) {
 	return value, nil
 }
 
-func (d *DotEnv) moveCursor(text string) {
+func (d *dotEnv) moveCursor(text string) {
 	d.cursor += len(text)
 	d.lineno += strings.Count(text, "\n")
 }
 
-func (d *DotEnv) doLoad(overrideExistingVars bool, paths ...string) error {
+func (d *dotEnv) doLoad(overrideExistingVars bool, paths ...string) error {
 	for _, path := range paths {
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -485,7 +481,7 @@ func (d *DotEnv) doLoad(overrideExistingVars bool, paths ...string) error {
 	return nil
 }
 
-func (d *DotEnv) error(message string) ParseError {
+func (d *dotEnv) error(message string) ParseError {
 	return ParseError{
 		Line:     d.lineno,
 		Position: d.cursor,

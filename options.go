@@ -1,10 +1,10 @@
 package godotenv
 
-type option func(*DotEnv) option
+type option func(*dotEnv) option
 
 // Sets a list of app envs for which sets the debug status to false
 func ProdEnvs(prodEnvs []string) option {
-	return func(d *DotEnv) option {
+	return func(d *dotEnv) option {
 		previous := d.prodEnvs
 		d.prodEnvs = prodEnvs
 
@@ -14,7 +14,7 @@ func ProdEnvs(prodEnvs []string) option {
 
 // Sets a list of app envs for which .env.local should be ignored
 func TestEnvs(testEnvs []string) option {
-	return func(d *DotEnv) option {
+	return func(d *dotEnv) option {
 		previous := d.testEnvs
 		d.testEnvs = testEnvs
 
@@ -24,7 +24,7 @@ func TestEnvs(testEnvs []string) option {
 
 // Sets the name of the env vars that defines the app env
 func EnvKey(envKey string) option {
-	return func(d *DotEnv) option {
+	return func(d *dotEnv) option {
 		previous := d.envKey
 		d.envKey = envKey
 
@@ -34,7 +34,7 @@ func EnvKey(envKey string) option {
 
 // Sets the name of the env vars that defines the app debug status
 func DebugKey(debugKey string) option {
-	return func(d *DotEnv) option {
+	return func(d *dotEnv) option {
 		previous := d.debugKey
 		d.envKey = debugKey
 
@@ -44,11 +44,10 @@ func DebugKey(debugKey string) option {
 
 // Sets the app env to use when none is defined
 func DefaultEnv(defaultEnv string) option {
-	return func(d *DotEnv) option {
+	return func(d *dotEnv) option {
 		previous := d.defaultEnv
 		d.defaultEnv = defaultEnv
 
 		return DefaultEnv(previous)
 	}
 }
-
