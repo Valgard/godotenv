@@ -1,5 +1,7 @@
 package godotenv
 
+// Manages .env files.
+
 import (
 	"fmt"
 	"io/ioutil"
@@ -70,6 +72,9 @@ func (d *dotEnv) Load(path string, extraPaths ...string) error {
 }
 
 // Loads a .env file and the corresponding .env.local, .env.$env and .env.$env.local files if they exist.
+//
+// .env.local is always ignored in test env because tests should produce the same results for everyone.
+// .env.dist is loaded when it exists and .env is not found.
 func (d *dotEnv) LoadEnv(path string, opts ...option) error {
 	previous := d.Option(opts...)
 	defer d.Option(previous...)
@@ -126,6 +131,7 @@ func (d *dotEnv) Overload(path string, extraPaths ...string) error {
 	return d.doLoad(true, append([]string{path}, extraPaths...)...)
 }
 
+// Sets values as environment variables.
 func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) error {
 	var (
 		currentEnv = map[string]string{}
@@ -154,6 +160,7 @@ func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) e
 	return nil
 }
 
+// Parses the contents of an .env file
 func (d *dotEnv) Parse(data string, path string) (map[string]string, error) {
 	var (
 		err   error
