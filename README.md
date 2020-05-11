@@ -1,6 +1,6 @@
 # godotenv
 
-This module parses .env files to make environment variables stored in them accessible via os.Getenv(key)
+This module parses `.env` files to make environment variables stored in them accessible via `os.Getenv("key")`
 
 > This is a port of the Symfony 
 > [Dotenv](https://symfony.com/doc/current/components/dotenv.html "Homepage of the Symfony Dotenv Component") Component 
