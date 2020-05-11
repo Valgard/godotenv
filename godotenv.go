@@ -28,6 +28,7 @@ type dotEnv struct {
 	data       string
 	end        int
 	values     map[string]string
+	loadedVars map[string]bool
 	envKey     string
 	defaultEnv string
 	debugKey   string
@@ -43,6 +44,7 @@ func New(opts ...option) *dotEnv {
 		data:       "",
 		end:        0,
 		values:     map[string]string{},
+		loadedVars: map[string]bool{},
 		envKey:     "APP_ENV",
 		debugKey:   "APP_DEBUG",
 		prodEnvs:   []string{"prod"},
@@ -135,11 +137,17 @@ func (d *dotEnv) Populate(values map[string]string, overrideExistingVars bool) e
 	}
 
 	for name, value := range values {
-		if _, envExists := currentEnv[name]; !overrideExistingVars && envExists {
+		_, varLoaded := d.loadedVars[name]
+		_, envExists := currentEnv[name]
+		if !varLoaded && (!overrideExistingVars && envExists) {
 			continue
 		}
 
 		_ = os.Setenv(name, value)
+
+		if !varLoaded {
+			d.loadedVars[name] = true
+		}
 	}
 
 	return nil
